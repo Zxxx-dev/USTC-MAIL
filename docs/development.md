@@ -13,11 +13,11 @@ python -m unittest -v
 
 GitHub Actions 的 `Windows package` 工作流在干净的 Windows x64 环境构建 EXE、wheel 和源码包，并运行离线测试。仅手动触发，不使用邮箱账号或真实密码。构建产物检查通过后发布到 Releases。
 
-本地也可在独立虚拟环境安装构建依赖后运行：
+本地也可从仓库根目录在独立虚拟环境中安装构建依赖后运行。`--specpath build` 会把 spec 文件放在 `build/`，因此图标参数相对于该目录写为 `../assets/ustc-mail.ico`：
 
 ```sh
 python -m pip install . pyinstaller==6.22.3 build
-python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --icon assets/ustc-mail.ico --hidden-import win32cred --hidden-import win32timezone --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
+python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --icon ../assets/ustc-mail.ico --hidden-import win32cred --hidden-import win32timezone --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
 python scripts/verify_exe_icon.py dist/windows/ustc-mail.exe assets/ustc-mail.ico
 python scripts/smoke_exe.py dist/windows/ustc-mail.exe
 python -m build
