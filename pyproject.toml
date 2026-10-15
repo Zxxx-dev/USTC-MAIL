@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ustc-mail-cli"
-version = "0.1.0"
-description = "中国科学技术大学邮箱命令行工具"
+version = "0.2.0"
+description = "USTC MAIL：供 Agent 与终端使用的中国科大邮箱工具"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}

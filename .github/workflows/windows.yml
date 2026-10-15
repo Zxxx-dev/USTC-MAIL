@@ -1,0 +1,39 @@
+name: Windows package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Install build dependencies
+        run: python -m pip install . pyinstaller==6.22.3 build
+      - name: Offline tests
+        run: python -m unittest -v
+      - name: Build Windows executable
+        run: python -m PyInstaller --clean --noconfirm --onefile --console --name ustc-mail --hidden-import win32cred --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
+      - name: Check executable with synthetic credentials
+        run: python scripts/smoke_exe.py dist/windows/ustc-mail.exe --test-credentials
+      - name: Build Python packages
+        run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ustc-mail-windows-and-python
+          path: |
+            dist/windows/ustc-mail.exe
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
