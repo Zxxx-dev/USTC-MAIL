@@ -218,7 +218,7 @@ class MailTests(unittest.TestCase):
         output = io.StringIO()
         with redirect_stdout(output):
             self.assertEqual(mail.main(["--json", "--version"]), 0)
-        self.assertEqual(json.loads(output.getvalue())["data"]["version"], "0.3.0")
+        self.assertEqual(json.loads(output.getvalue())["data"]["version"], "0.3.1")
         output = io.StringIO()
         with redirect_stdout(output):
             self.assertEqual(mail.main(["preview", "--json", "missing.json"]), 1)
