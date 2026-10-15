@@ -17,7 +17,7 @@ GitHub Actions 的 `Windows package` 工作流在干净的 Windows x64 环境构
 
 ```sh
 python -m pip install . pyinstaller==6.22.3 build
-python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --hidden-import win32cred --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
+python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --hidden-import win32cred --hidden-import win32timezone --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
 python scripts/smoke_exe.py dist/windows/ustc-mail.exe
 python -m build
 ```
