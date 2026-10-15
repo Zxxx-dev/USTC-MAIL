@@ -19,7 +19,6 @@ def main():
     for name in ("USTC_MAIL_ACCOUNT", "USTC_MAIL_PASSWORD", "PYTHONPATH", "PYTHONHOME"):
         env.pop(name, None)
     env["PATH"] = str(Path(env.get("SystemRoot", "")) / "System32")
-    env["PYTHONIOENCODING"] = "utf-8"
 
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
