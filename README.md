@@ -1,29 +1,32 @@
-# USTC MAIL
+<p align="center">
+  <img src="assets/logo.png" alt="USTC MAIL logo" width="160">
+</p>
 
-给 Agent 和终端使用的中国科学技术大学邮箱工具：只读看信、离线预览、草稿、按内容指纹确认发送。
+<h1 align="center">USTC MAIL</h1>
 
-## 选择安装方式
+<p align="center">面向中国科学技术大学邮箱的命令行工具，可供用户与 Agent 查看邮件、预览内容、保存草稿，并在逐封授权后发送。</p>
 
-**Windows 免安装版**：从 [Releases](https://github.com/Zxxx-dev/USTC-MAIL/releases/latest) 下载 `ustc-mail.exe`，在所在目录打开 PowerShell：
+## 安装
+
+**Windows 免安装版**：从 [Releases](https://github.com/Zxxx-dev/USTC-MAIL/releases/latest) 下载 `ustc-mail.exe`，在 PowerShell 中运行：
 
 ```powershell
 .\ustc-mail.exe --help
-.\ustc-mail.exe --account user@mail.ustc.edu.cn auth login
+.\ustc-mail.exe --json --account user@mail.ustc.edu.cn auth status
 ```
 
-**Python 版**（Python 3.11+，需要 Git）：
+**Python 版**：需要 Python 3.11+；安装 Git 后运行：
 
 ```sh
 python -m pip install "git+https://github.com/Zxxx-dev/USTC-MAIL.git"
-ustc-mail --account user@mail.ustc.edu.cn auth login
+ustc-mail --help
+ustc-mail --json --account user@mail.ustc.edu.cn auth status
 ```
 
-Windows 的 `auth login` 会隐藏输入并保存客户端专用密码。其他系统在首次联网命令中隐藏输入密码，见[使用教程](docs/usage.md)。
+## Agent 使用
 
-## 给 Agent 使用
+推荐读取仓库内的 [USTC MAIL 技能](skills/ustc-mail/SKILL.md)，并用 `--json` 获取稳定的单 JSON 输出。`--account`、`--json`、`--read-only` 和重复的 `--allow-recipient` 等全局参数放在子命令前。账号可通过 `USTC_MAIL_ACCOUNT` 设置。
 
-将仓库内的 [skills/ustc-mail](skills/ustc-mail/SKILL.md) 放入 Agent 支持的技能目录；或让 Agent 直接阅读该文件。先安装上面的 CLI，再提供账号与已安装入口，密码由用户在本地终端输入。
+程序可阻止误操作，但不构成对运行它的同一用户的完整 shell 权限隔离。内容指纹不能证明用户授权；发送前仍须得到对具体邮件的明确授权。
 
-账号通过 `--account` 或 `USTC_MAIL_ACCOUNT` 提供。发送必须有用户对具体邮件的授权，内容指纹不能代替授权。
-
-[完整教程与密码截图](docs/usage.md) · [开发与验证](docs/development.md) · [类似项目](docs/alternatives.md) · [MIT License](LICENSE)
+[使用教程与密码设置截图](docs/usage.md) · [开发与打包](docs/development.md) · [替代项目](docs/alternatives.md) · [MIT License](LICENSE)

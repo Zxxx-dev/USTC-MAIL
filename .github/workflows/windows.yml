@@ -23,7 +23,9 @@ jobs:
       - name: Offline tests
         run: python -m unittest -v
       - name: Build Windows executable
-        run: python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --hidden-import win32cred --hidden-import win32timezone --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
+        run: python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --icon assets/ustc-mail.ico --hidden-import win32cred --hidden-import win32timezone --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
+      - name: Verify embedded executable icon
+        run: python scripts/verify_exe_icon.py dist/windows/ustc-mail.exe assets/ustc-mail.ico
       - name: Check executable with synthetic credentials
         run: python scripts/smoke_exe.py dist/windows/ustc-mail.exe --test-credentials
       - name: Build Python packages

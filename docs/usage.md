@@ -2,7 +2,7 @@
 
 ## 1. 安装
 
-Windows 用户从 [Releases](https://github.com/Zxxx-dev/USTC-MAIL/releases/latest) 下载 `ustc-mail.exe`，放在自己选择的目录。在该目录打开 PowerShell，通过 `.\ustc-mail.exe` 运行，无需安装 Python。当前提供 Windows x64 版本。
+Windows 用户可从 [Releases](https://github.com/Zxxx-dev/USTC-MAIL/releases/latest) 下载 `ustc-mail.exe`，放入自己选择的目录后在 PowerShell 中运行，无需安装 Python。当前提供 Windows x64 版本。
 
 Python 用户需要 Python 3.11+。安装 Git 后运行：
 
@@ -10,11 +10,29 @@ Python 用户需要 Python 3.11+。安装 Git 后运行：
 python -m pip install "git+https://github.com/Zxxx-dev/USTC-MAIL.git"
 ```
 
-也可以下载 Release 中的 `.whl` 文件后运行 `python -m pip install 文件名.whl`，无需 Git；或下载源码压缩包、解压并在源码目录执行 `python -m pip install .`。Windows 依赖 `pywin32`，安装 Python 版时自动包含。
+也可安装 Release 中的 `.whl`，或在源码目录执行 `python -m pip install .`。Windows Python 安装会自动包含 `pywin32`。
 
-下文使用 Python 版的 `ustc-mail` 命令；EXE 用户将它替换为 `.\ustc-mail.exe`。全局参数 `--account` 放在子命令之前；也可设置 `USTC_MAIL_ACCOUNT`，命令参数优先。没有默认个人账号。
+下文示例使用 Python 版 `ustc-mail`；EXE 用户将命令替换为 `.\ustc-mail.exe`。`--account`、`--json`、`--read-only` 和 `--allow-recipient` 等全局参数放在子命令之前。账号可使用 `--account user@mail.ustc.edu.cn` 或 `USTC_MAIL_ACCOUNT`，命令参数优先。
 
-## 2. 获取客户端专用密码
+## 2. Agent 输出与只读保护
+
+推荐 Agent 使用 `--json`。每条命令输出一个 JSON 对象，包含 `ok`、`command`、`state`、`retryable`、`data`，失败时还包含 `error`：
+
+```sh
+ustc-mail --json --account user@mail.ustc.edu.cn auth status
+```
+
+`--read-only` 或环境变量 `USTC_MAIL_READ_ONLY=1` 会在联网前拒绝 `draft`、`send`、`auth login` 和 `auth forget`：
+
+```sh
+ustc-mail --read-only --json --account user@mail.ustc.edu.cn search --limit 5
+```
+
+可重复设置 `--allow-recipient` 限定允许的精确收件地址；未设置时保持原有收件行为。总收件人与抄送人数最多为 5。
+
+这些程序保护可减少误操作，但不构成对同一用户完整 shell 权限的隔离。邮件内容或内容指纹都不能证明用户授权。
+
+## 3. 获取客户端专用密码
 
 1. 登录[科大邮箱网页版](https://mail.ustc.edu.cn/)。
 2. 点击左下角齿轮，进入“安全设置”。
@@ -33,23 +51,24 @@ ustc-mail --account user@mail.ustc.edu.cn auth status
 ustc-mail --account user@mail.ustc.edu.cn auth forget
 ```
 
-`auth login` 隐藏输入客户端专用密码，先验证 SMTP 登录，成功后保存到当前 Windows 用户的凭据管理器，不发送邮件。`auth status` 输出保存状态，不显示密码。`auth forget` 移除本机凭据，不撤销服务器密码，仅在需要移除时运行。
+`auth login` 隐藏输入客户端专用密码，先验证 SMTP 登录，成功后保存到当前 Windows 用户的凭据管理器，不发送邮件。`auth status` 只输出保存状态。`auth forget` 移除本机凭据，不撤销服务器密码。
 
-其他系统使用联网命令时隐藏输入密码；自动化环境也可临时注入 `USTC_MAIL_PASSWORD`。读取顺序为临时环境变量、当前账号的 Windows 凭据、交互输入。环境变量若过期会覆盖有效保存凭据；排障只检查是否存在，不输出值。非 Windows 系统不支持 `auth login/forget` 保存或删除凭据。
+其他系统在首次联网命令中隐藏输入密码，也可临时注入 `USTC_MAIL_PASSWORD`。读取顺序为临时环境变量、当前账号的 Windows 凭据、交互输入。环境变量若过期会覆盖有效保存凭据；排障只检查是否存在，不输出值。非 Windows 系统不支持 `auth login/forget` 保存或删除凭据。
 
-## 3. 查看邮件
+## 4. 搜索和读取邮件
 
 ```sh
 ustc-mail --account user@mail.ustc.edu.cn folders
-ustc-mail --account user@mail.ustc.edu.cn list --limit 10
-ustc-mail --account user@mail.ustc.edu.cn read 123 --folder INBOX
+ustc-mail --account user@mail.ustc.edu.cn search --from recipient@example.com --subject 通知 --since 2026-01-01 --unread --folder INBOX --limit 10
+ustc-mail --account user@mail.ustc.edu.cn read 123 --folder INBOX --metadata-only
+ustc-mail --account user@mail.ustc.edu.cn read 123 --folder INBOX --max-body-chars 12000 --max-message-bytes 10485760
 ```
 
-`123` 是 `list` 输出的 UID，仅在对应文件夹内有效。读取使用只读选择和 `BODY.PEEK`，不主动改变已读状态。`folders` 返回实际文件夹编码名和特殊用途标志；草稿箱依据 `\Drafts` 标志识别，中文名称可能是 IMAP 修改版 UTF-7，不猜测英文名称。
+`search` 支持 `--from`、`--subject`、`--since YYYY-MM-DD`、`--unread`、`--folder` 和 `--limit`。完整正文读取默认最多返回 12,000 个正文字符；下载正文前会检查 `RFC822.SIZE`，拒绝超过 10 MiB 的原始邮件。可通过 `--max-body-chars` 与 `--max-message-bytes` 调整正文读取上限。`--metadata-only` 只取邮件头，不下载完整 MIME，因此不受原始邮件大小上限限制。UID 仅在对应文件夹内有效。读取使用只读选择和 `BODY.PEEK`，不主动改变已读状态。草稿箱依据 `folders` 返回的特殊用途标志识别；中文文件夹名可能是 IMAP 修改版 UTF-7，不猜测英文名称。
 
-## 4. 准备、预览、保存草稿
+## 5. 准备、预览、保存草稿
 
-自行创建 `mail.json` 与 UTF-8 正文文件 `body.txt`：
+准备 `mail.json` 与 UTF-8 正文文件 `body.txt`：
 
 ```json
 {
@@ -61,31 +80,31 @@ ustc-mail --account user@mail.ustc.edu.cn read 123 --folder INBOX
 }
 ```
 
-可选 `html_file` 指向实际发送的 HTML 正文片段，不能直接使用含导航和操作按钮的整页 HTML；`attachments` 填文件路径数组。路径相对 JSON 所在目录，也支持绝对路径。仅支持一个主收件人和可选抄送，不支持密送、群发或自动追信。
+可选 `html_file` 指向实际发送的 HTML 正文片段，`attachments` 填文件路径数组。路径相对 JSON 所在目录，也支持绝对路径。仅支持一个主收件人及可选抄送，总收件人数最多为 5。
 
 ```sh
 ustc-mail --account user@mail.ustc.edu.cn preview mail.json --output preview.html
 ustc-mail --account user@mail.ustc.edu.cn draft mail.json --folder Drafts
 ```
 
-预览不联网，输出正文、附件信息和 SHA-256；已有 HTML 文件不覆盖。草稿箱名替换为 `folders` 实际返回值。草稿新增后按 Message-ID 定位并回读完整 MIME；失败或内容不一致时可能已保存，先人工检查，避免重复新增。
+预览不联网，输出正文、附件信息和 SHA-256；已有 HTML 文件不会覆盖。预览页使用 sandbox 与 CSP 限制展示内容；实际发送的 HTML 正文不会因此改变。草稿箱名替换为 `folders` 返回的实际值。工具按 Message-ID 回读并核验新增草稿；服务端可能改写 MIME，核验会考虑等价变化。`draft_submitted_unverified` 或 `draft_result_unknown` 表示结果未能确认，先人工检查草稿箱，不要自动重试。
 
-## 5. 逐封确认发送
+## 6. 逐封确认发送
 
-操作员核对具体收件人、主题、正文、附件并授权后运行：
+先预览并核对具体收件人、主题、正文和附件；只有用户明确授权发送这封邮件后，才运行：
 
 ```sh
 ustc-mail --account user@mail.ustc.edu.cn send mail.json --confirm-sha256 "预览输出的完整64位指纹"
 ```
 
-指纹覆盖收发件地址、抄送、主题、双格式正文及附件名称/内容；内容修改后必须重新预览。Agent 能计算指纹不代表已经获得发送授权。工具不自动发送或重试。
-
-发送记录位于用户主目录的 `.ustc-mail/receipts/`。同内容已有记录时阻止再次发送；记录包含地址、主题、Message-ID、时间和状态，不含密码或正文：
+指纹覆盖收发件地址、抄送、主题、双格式正文及附件名称和内容。内容变化后须重新预览；能够计算指纹不能代替用户授权。发送记录位于用户主目录 `.ustc-mail/receipts/`，同内容已有记录时会阻止再次发送。记录含地址、主题、Message-ID、时间和状态，不含密码或正文：
 
 | 状态 | 含义 |
 |---|---|
 | `attempting` | 已开始提交，最终结果未知，先查邮箱和记录 |
-| `smtp_accepted` | SMTP 接受所有收件人，不证明对方已收到或已读 |
+| `smtp_accepted` | SMTP 接受所有收件人，不代表对方已收到或已读 |
 | `partially_refused` | 部分地址拒收，其他地址可能已接受，不可整封重发 |
 
-去重只覆盖本 CLI 的本地记录，不能识别其他客户端历史发送；不要自动删除记录来绕过去重。工具不自动追加“已发送”副本，服务器归档行为须自行核验。
+`draft_submitted_unverified` 与 `draft_result_unknown` 同样不可自动重试。去重只覆盖本 CLI 本地记录，不能识别其他客户端历史发送；不要删除记录绕过检查。工具不自动追加“已发送”副本，服务器归档行为须自行核验。
+
+真实邮箱登录、IMAP 兼容性、草稿显示、实际投递和服务器归档未在离线验证中覆盖。

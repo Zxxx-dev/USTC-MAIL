@@ -17,11 +17,12 @@ GitHub Actions 的 `Windows package` 工作流在干净的 Windows x64 环境构
 
 ```sh
 python -m pip install . pyinstaller==6.22.3 build
-python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --hidden-import win32cred --hidden-import win32timezone --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
+python -m PyInstaller --clean --noconfirm --onefile --console --python-option "X utf8" --name ustc-mail --icon assets/ustc-mail.ico --hidden-import win32cred --hidden-import win32timezone --distpath dist/windows --workpath build/pyinstaller --specpath build ustc_mail.py
+python scripts/verify_exe_icon.py dist/windows/ustc-mail.exe assets/ustc-mail.ico
 python scripts/smoke_exe.py dist/windows/ustc-mail.exe
 python -m build
 ```
 
-EXE 验证在临时目录运行，移除 Python 所在目录的 PATH，只执行帮助、缺失账号报错和离线预览；不登录邮箱或发送邮件。工作流另以随机临时账号及假密码验证 EXE 的 Windows 凭据读写和移除，结束后清理。
+EXE smoke 在临时目录、无 Python PATH 且清除 `USTC_MAIL_*` 环境变量后运行。它核对 `--version` 和 JSON 结果结构，检查 search/read 帮助中筛选、metadata-only 与限额参数，验证缺失账号时的 JSON 错误；离线预览会核对指纹、sandbox/CSP 与脚本拦截。它还覆盖重复预览不覆盖文件、精确收件人白名单的允许/拒绝、只读模式在联网前拒绝草稿/发送/凭据修改，以及超过收件人上限的拒绝。限额项在 smoke 中检查帮助参数；具体邮件大小预拒绝由离线单元测试覆盖。以上均不登录邮箱或发送邮件。工作流另以随机临时账号及假密码验证 EXE 的 Windows 凭据读写和移除，结束后清理。
 
 真实邮箱登录、IMAP 兼容性、草稿显示、实际投递和服务器归档需要使用者自行验证。默认测试不证明这些行为。

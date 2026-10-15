@@ -1,3 +1,5 @@
 recursive-include docs *.md *.png
 recursive-include skills *.md
-include scripts/smoke_exe.py
+recursive-include assets *.png *.ico
+include scripts/smoke_exe.py scripts/verify_exe_icon.py
+include test_ustc_mail.py test_send_payload.py
