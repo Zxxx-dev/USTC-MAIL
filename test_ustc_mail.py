@@ -48,6 +48,53 @@ class MailTests(unittest.TestCase):
             password.assert_not_called()
             network.assert_not_called()
 
+    def test_non_ascii_account_rejected_before_password_or_network(self):
+        for source in ("argument", "environment"):
+            with self.subTest(source=source), patch.dict(mail.os.environ, {"USTC_MAIL_ACCOUNT": "你的邮箱@mail.ustc.edu.cn"}), \
+                    patch.object(mail, "input_password") as prompt, patch.object(mail.smtplib, "SMTP_SSL") as smtp, \
+                    redirect_stdout(io.StringIO()) as output:
+                args = ["--json", "auth", "login"]
+                if source == "argument":
+                    args = ["--account", "你的邮箱@mail.ustc.edu.cn", *args]
+                self.assertEqual(mail.main(args), 1)
+                result = json.loads(output.getvalue())
+                self.assertEqual(result["error"]["code"], "invalid_config")
+                self.assertIn("邮箱账号不能包含", result["error"]["message"])
+                prompt.assert_not_called()
+                smtp.assert_not_called()
+
+    def test_non_ascii_login_password_rejected_without_echo_or_network(self):
+        secret = "x专用密码"
+        for source in ("environment", "prompt"):
+            with self.subTest(source=source), patch.dict(mail.os.environ, {"USTC_MAIL_PASSWORD": secret if source == "environment" else ""}), \
+                    patch.object(mail, "input_password", return_value=secret), patch.object(mail.smtplib, "SMTP_SSL") as smtp, \
+                    redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(mail.main(["--json", "auth", "login"]), 1)
+                result = json.loads(output.getvalue())
+                self.assertEqual(result["error"]["code"], "invalid_config")
+                self.assertIn("客户端专用密码不能包含", result["error"]["message"])
+                self.assertNotIn(secret, output.getvalue())
+                smtp.assert_not_called()
+
+    def test_non_ascii_password_rejected_for_all_sources(self):
+        for source in ("environment", "saved", "prompt"):
+            with self.subTest(source=source), patch.dict(mail.os.environ, {"USTC_MAIL_PASSWORD": "x专用密码" if source == "environment" else ""}), \
+                    patch.object(mail, "credential", return_value="x专用密码" if source == "saved" else None), \
+                    patch.object(mail, "input_password", return_value="x专用密码"):
+                with self.assertRaisesRegex(ValueError, "客户端专用密码不能包含"):
+                    mail.password(TEST_ACCOUNT)
+
+    def test_all_three_account_domains_preserved_for_auth(self):
+        for domain in ("ustc.edu.cn", "mail.ustc.edu.cn", "ah.edu.cn"):
+            account = "user@" + domain
+            with self.subTest(domain=domain), patch.object(mail, "auth", return_value={}) as auth:
+                self.assertEqual(mail.main(["--account", account, "auth", "status"]), 0)
+                auth.assert_called_once_with(account, "status")
+        for account in ("user@example.com", "user@fakeah.edu.cn", "user@ah.edu.cn.example.com"):
+            with self.subTest(account=account), patch.object(mail, "auth") as auth:
+                self.assertEqual(mail.main(["--account", account, "auth", "login"]), 1)
+                auth.assert_not_called()
+
     def test_account_environment_and_argument_override(self):
         with patch.object(mail, "auth") as auth:
             self.assertEqual(mail.main(["auth", "status"]), 0)
@@ -502,10 +549,10 @@ class MailTests(unittest.TestCase):
         account = "cli-selftest-" + uuid.uuid4().hex + "@mail.ustc.edu.cn"
         try:
             self.assertIsNone(mail.credential(account))
-            mail.credential(account, "write", "非真实凭据-test")
-            self.assertEqual(mail.credential(account), "非真实凭据-test")
+            mail.credential(account, "write", "synthetic-credential-test")
+            self.assertEqual(mail.credential(account), "synthetic-credential-test")
             import subprocess
-            code = "import ustc_mail,sys; assert ustc_mail.password(sys.argv[1]) == '非真实凭据-test'"
+            code = "import ustc_mail,sys; assert ustc_mail.password(sys.argv[1]) == 'synthetic-credential-test'"
             child_env = mail.os.environ.copy()
             child_env.pop("USTC_MAIL_PASSWORD", None)
             result = subprocess.run([mail.sys.executable, "-c", code, account], cwd=Path(mail.__file__).parent,

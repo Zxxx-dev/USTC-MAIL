@@ -49,8 +49,10 @@ def address(value):
 
 def account_address(value):
     value = address(value)
-    if value.rsplit("@", 1)[1].lower() not in {"ustc.edu.cn", "mail.ustc.edu.cn"}:
-        raise ValueError("发件账号须为科大邮箱")
+    if not value.isascii():
+        raise ValueError("邮箱账号不能包含中文、全角或其他非 ASCII 字符；请填写实际完整科大邮箱地址，勿使用示例占位文字")
+    if value.rsplit("@", 1)[1].lower() not in {"ustc.edu.cn", "mail.ustc.edu.cn", "ah.edu.cn"}:
+        raise ValueError("发件账号后缀须为 ustc.edu.cn、mail.ustc.edu.cn 或 ah.edu.cn")
     return value
 
 
@@ -191,11 +193,17 @@ def input_password():
     return value
 
 
+def validate_password(value):
+    if not value.isascii():
+        raise ValueError("客户端专用密码不能包含中文、全角或其他非 ASCII 字符；请重新复制网页生成的密码，勿输入密码名称。未输出密码")
+    return value
+
+
 def password(account):
     value = os.environ.get("USTC_MAIL_PASSWORD")
     if not value:
         value = credential(account)
-    return value or input_password()
+    return validate_password(value or input_password())
 
 
 def auth(account, action):
@@ -209,7 +217,7 @@ def auth(account, action):
         print("已移除本账号的本机凭据；未撤销邮箱服务器上的专用密码。")
         return {"account": account, "credential_removed": True}
     else:
-        secret = os.environ.get("USTC_MAIL_PASSWORD") or input_password()
+        secret = validate_password(os.environ.get("USTC_MAIL_PASSWORD") or input_password())
         with smtplib.SMTP_SSL(HOST, 465, context=ssl.create_default_context(), timeout=30) as client:
             client.login(account, secret)
         credential(account, "write", secret)

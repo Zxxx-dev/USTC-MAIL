@@ -12,7 +12,7 @@ python -m pip install "git+https://github.com/Zxxx-dev/USTC-MAIL.git"
 
 也可安装 Release 中的 `.whl`，或在源码目录执行 `python -m pip install .`。Windows Python 安装会自动包含 `pywin32`。
 
-下文示例使用 Python 版 `ustc-mail`；EXE 用户将命令替换为 `.\ustc-mail.exe`。`--account`、`--json`、`--read-only` 和 `--allow-recipient` 等全局参数放在子命令之前。账号可使用 `--account user@mail.ustc.edu.cn` 或 `USTC_MAIL_ACCOUNT`，命令参数优先。
+下文示例使用 Python 版 `ustc-mail`；EXE 用户将命令替换为 `.\ustc-mail.exe`。`--account`、`--json`、`--read-only` 和 `--allow-recipient` 等全局参数放在子命令之前。账号可使用 `--account user@mail.ustc.edu.cn` 或 `USTC_MAIL_ACCOUNT`，命令参数优先。支持 `ustc.edu.cn`、`mail.ustc.edu.cn`、`ah.edu.cn` 三种邮箱后缀；使用自己实际拥有的地址，不要自行替换后缀。三种地址均连接 `mail.ustc.edu.cn`。
 
 ## 2. Agent 输出与只读保护
 
@@ -50,6 +50,8 @@ ustc-mail --account user@mail.ustc.edu.cn auth login
 ustc-mail --account user@mail.ustc.edu.cn auth status
 ustc-mail --account user@mail.ustc.edu.cn auth forget
 ```
+
+示例中的 `user@mail.ustc.edu.cn` 必须替换为自己的完整邮箱地址，不能填姓名或“你的邮箱”等文字。账号与客户端专用密码若含中文、全角或其他非 ASCII 字符，会在联网前明确报错；密码应复制网页生成的实际值，而非自己填写的密码名称。不要将密码发给 Agent。Agent 可配置账号并打开交互终端，由用户本人粘贴密码。
 
 `auth login` 隐藏输入客户端专用密码，先验证 SMTP 登录，成功后保存到当前 Windows 用户的凭据管理器，不发送邮件。`auth status` 只输出保存状态。`auth forget` 移除本机凭据，不撤销服务器密码。
 
