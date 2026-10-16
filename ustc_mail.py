@@ -23,7 +23,7 @@ import sys
 
 HOST = "mail.ustc.edu.cn"
 RECEIPTS = Path.home() / ".ustc-mail" / "receipts"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 DEFAULT_MAX_BODY_CHARS = 12000
 DEFAULT_MAX_MESSAGE_BYTES = 10485760
 

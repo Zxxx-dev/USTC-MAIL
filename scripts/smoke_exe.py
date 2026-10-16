@@ -58,7 +58,7 @@ def main():
         help_text = run("--help")
         assert "preview" in help_text
         version_text = run("--version")
-        assert "0.1.0" in version_text, version_text
+        assert "0.1.1" in version_text, version_text
 
         command_help = {
             command: run(command, "--help")
